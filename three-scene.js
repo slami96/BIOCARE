@@ -20,11 +20,9 @@ let arLabels = {};
 let tracker = document.getElementById('body-tracker');
 let audioEnabled = true;
 let logo;
-let logoMixer;
 
 // DOM elements
 const canvasContainer = document.getElementById('canvas-container');
-const infoContent = document.getElementById('info-content');
 const loadingOverlay = document.getElementById('loading-overlay');
 const progressBar = document.getElementById('progress-bar');
 const loadingText = document.getElementById('loading-text');
@@ -40,8 +38,8 @@ const soundScan = document.getElementById('sound-scan');
 // Detailed information for each body part with improved zone coordinates
 const bodyPartsData = {
   head: {
-    name: "Cognitive Assessment",  // Renamed from "Head"
-    system: "Neural Function",  // Renamed from "Nervous System"
+    name: "Cognitive Assessment",
+    system: "Neural Function",
     description: "Analysis of memory function and cognitive processing abilities.",
     zone: new THREE.Box3(
       new THREE.Vector3(-0.5, 2.6, -0.5),
@@ -49,8 +47,8 @@ const bodyPartsData = {
     )
   },
   chest: {
-    name: "Cardiovascular Test",  // Renamed from "Chest/Torso"
-    system: "Circulatory Function",  // Renamed from "Respiratory & Cardiovascular Systems"
+    name: "Cardiovascular Test",
+    system: "Circulatory Function",
     description: "Evaluation of heart rate patterns and cardiovascular health indicators.",
     zone: new THREE.Box3(
       new THREE.Vector3(-0.8, 1.5, -0.5),
@@ -58,8 +56,8 @@ const bodyPartsData = {
     )
   },
   abdomen: {
-    name: "Body Composition",  // Renamed from "Abdomen"
-    system: "Metabolic Status",  // Renamed from "Digestive & Urinary Systems"
+    name: "Body Composition",
+    system: "Metabolic Status",
     description: "Assessment of body mass index and tissue composition metrics.",
     zone: new THREE.Box3(
       new THREE.Vector3(-0.4, 1.0, -0.3),
@@ -67,8 +65,8 @@ const bodyPartsData = {
     )
   },
   leftArm: {
-    name: "Reaction Assessment",  // Renamed from "Left Arm"
-    system: "Neural Responsiveness",  // Renamed from "Musculoskeletal System"
+    name: "Reaction Assessment",
+    system: "Neural Responsiveness",
     description: "Measurement of neural pathway efficiency and response time.",
     zone: new THREE.Box3(
       new THREE.Vector3(-1.5, 1.2, -0.6),
@@ -76,8 +74,8 @@ const bodyPartsData = {
     )
   },
   rightArm: {
-    name: "Reaction Assessment",  // Renamed from "Right Arm"
-    system: "Neural Responsiveness",  // Renamed from "Musculoskeletal System"
+    name: "Reaction Assessment",
+    system: "Neural Responsiveness",
     description: "Measurement of neural pathway efficiency and response time.",
     zone: new THREE.Box3(
       new THREE.Vector3(0.5, 1.2, -0.6),
@@ -85,8 +83,8 @@ const bodyPartsData = {
     )
   },
   leftLeg: {
-    name: "Stability Assessment",  // Renamed from "Left Leg"
-    system: "Vestibular Function",  // Renamed from "Musculoskeletal System"
+    name: "Stability Assessment",
+    system: "Vestibular Function",
     description: "Evaluation of balance, proprioception, and vestibular system performance.",
     zone: new THREE.Box3(
       new THREE.Vector3(-0.6, -0.2, -0.5),
@@ -94,8 +92,8 @@ const bodyPartsData = {
     )
   },
   rightLeg: {
-    name: "Stability Assessment",  // Renamed from "Right Leg"
-    system: "Vestibular Function",  // Renamed from "Musculoskeletal System"
+    name: "Stability Assessment",
+    system: "Vestibular Function",
     description: "Evaluation of balance, proprioception, and vestibular system performance.",
     zone: new THREE.Box3(
       new THREE.Vector3(0.1, -0.2, -0.5),
@@ -134,7 +132,6 @@ function setupRenderer() {
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
-  renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.2;
   renderer.shadowMap.enabled = true;
@@ -378,8 +375,7 @@ function optimizeAndCenterModel(model) {
   console.log('Model scaled and centered. Scale:', scale, 'Position:', model.position);
   console.log('Model bounding box:', box.min, box.max);
   
-  // No need to update zones - we've manually defined them to match the model
-  // Just apply the model position offset to all zones
+  // Apply the model position offset to all zones
   Object.keys(bodyPartsData).forEach(part => {
     const zone = bodyPartsData[part].zone;
     zone.translate(model.position);
@@ -561,6 +557,12 @@ function showAllZones() {
 }
 
 // --- Handle Window Resize ---
+function onWindowResize() {
+  if (!renderer || !camera || !canvasContainer) return;
+  camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(canvasContainer.clientWidth
+                   // --- Handle Window Resize ---
 function onWindowResize() {
   if (!renderer || !camera || !canvasContainer) return;
   camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
@@ -817,3 +819,103 @@ function selectBodyPart(partId, clickPoint) {
       }
     });
   }
+  
+  // If no meshes were selected, try alternative methods
+  if (selectedObjects.length === 0) {
+    console.log('No meshes in zone, selecting by object names for', partId);
+    
+    // First try: select by part name in mesh name
+    model.traverse((object) => {
+      if (object.isMesh) {
+        const meshName = object.name.toLowerCase();
+        const partName = bodyPartsData[partId].name.toLowerCase();
+        if (
+          meshName.includes(partId) || 
+          meshName.includes(partName) ||
+          (partId === 'head' && (meshName.includes('head') || meshName.includes('skull') || meshName.includes('face'))) ||
+          (partId === 'chest' && (meshName.includes('chest') || meshName.includes('torso') || meshName.includes('rib'))) ||
+          (partId === 'abdomen' && (meshName.includes('abdomen') || meshName.includes('stomach') || meshName.includes('waist'))) ||
+          (partId.includes('arm') && (meshName.includes('arm') || meshName.includes('hand') || meshName.includes('shoulder'))) ||
+          (partId.includes('leg') && (meshName.includes('leg') || meshName.includes('thigh') || meshName.includes('foot')))
+        ) {
+          selectedObjects.push(object);
+        }
+      }
+    });
+    
+    // Last resort: if still no objects found, just highlight any visible mesh
+    if (selectedObjects.length === 0) {
+      model.traverse((object) => {
+        if (object.isMesh && object.visible) {
+          selectedObjects.push(object);
+        }
+      });
+    }
+  }
+  
+  outlinePass.selectedObjects = selectedObjects;
+  if (clickPoint) {
+    updateTrackerPosition(clickPoint);
+  }
+  
+  setTimeout(() => {
+    updateSystemStatus('TEST ACTIVE', 'green');
+  }, 1000);
+}
+
+// --- Clear Body Part Selection ---
+function clearBodyPartSelection() {
+  selectedPart = null;
+  outlinePass.selectedObjects = [];
+  hideTracker();
+  
+  // Reset the test display
+  if (window.loadTest) {
+    window.loadTest(null);
+  }
+}
+
+// --- Update AR Labels Positions (Raised) ---
+function updateARLabelsPositions() {
+  if (!model || !camera) return;
+  // Adjusted positions for labels (raised y-values)
+  const labelPositions = {
+    head: new THREE.Vector3(0, 3.2, 0),
+    torso: new THREE.Vector3(0.6, 2.2, 0),
+    arm: new THREE.Vector3(-1.2, 1.8, 0),
+    leg: new THREE.Vector3(0.6, 0.2, 0),
+    abdomen: new THREE.Vector3(0, 1.4, 0.4) // Added abdomen label position
+  };
+  for (const [label, element] of Object.entries(arLabels)) {
+    if (element && labelPositions[label]) {
+      const position = labelPositions[label].clone();
+      position.add(model.position);
+      const vector = position.project(camera);
+      const x = (vector.x * 0.5 + 0.5) * canvasContainer.clientWidth;
+      const y = (-(vector.y * 0.5) + 0.5) * canvasContainer.clientHeight;
+      element.style.left = (label.includes('right') ? x + 40 : x - 40) + 'px';
+      element.style.top = y + 'px';
+      element.style.display = vector.z < 1 ? 'block' : 'none';
+    }
+  }
+}
+
+// --- Animation Loop ---
+function animate() {
+  requestAnimationFrame(animate);
+  if (controls) {
+    controls.update();
+  }
+  animateLogo(); // Add this line to animate the logo
+  if (composer && scene && camera) {
+    composer.render();
+  }
+  updateARLabelsPositions();
+}
+
+// Initialize everything when the document is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
