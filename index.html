@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BioCare Health Assessment System</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap">
+  <!-- React and Babel scripts -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loading-overlay">
+    <h2 class="text-4xl font-bold text-center mb-2 glow-text">BIOCARE ASSESSMENT SYSTEM</h2>
+    <p class="text-blue-400 mb-2">Biometric scanning in progress...</p>
+    <p class="text-gray-400 mb-6">Please remain still while we analyze your health parameters</p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-bar"></div>
+    </div>
+    <p id="loading-text" class="mt-4 text-sm text-gray-300 blink-animation">Initializing bioscan...</p>
+  </div>
+
+  <div class="flex h-screen md:flex-row flex-col-reverse">
+    <!-- Information Panel - Will be replaced with React assessment tests -->
+    <div id="info-panel" class="relative">
+      <!-- Mobile Toggle -->
+      <button id="panel-toggle" class="panel-toggle hidden absolute top-4 right-4 md:hidden bg-gray-700 p-2 rounded-md hover:bg-gray-600 focus:outline-none">
+        <svg id="toggle-panel-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+      <!-- Header Section -->
+      <div class="p-6">
+        <div class="sci-title pl-6 mb-4">
+          <h1 class="text-2xl font-bold">BioCare Assessment System</h1>
+          <p class="text-sm text-gray-400">Personalized Health Diagnostics</p>
+        </div>
+        <div class="flex items-center space-x-2 mb-4">
+          <div class="sci-badge bg-blue-700 text-blue-50">
+            <span class="opacity-60">BIO</span><span>METRICS</span>
+          </div>
+          <div class="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+          <div class="text-xs text-green-400">ASSESSMENT ACTIVE</div>
+        </div>
+      </div>
+      <!-- Test Container - Will be populated by React -->
+      <div id="test-container" class="px-6 pb-6">
+        <!-- React content will be rendered here -->
+      </div>
+    </div>
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container" class="relative">
+      <!-- HUD Elements -->
+      <div class="hud-element body-stat sci-panel">
+        <div class="text-xs text-blue-300 mb-1">DIAGNOSTIC STATUS</div>
+        <div class="text-xs">
+          <span>SYSTEM</span>: <span id="system-status" class="text-green-400">STANDBY</span>
+        </div>
+        <div class="text-xs">
+          <span>RECOMMENDED TESTS</span>: <span class="text-yellow-400">5</span>
+        </div>
+      </div>
+      <!-- Scan Line Animation -->
+      <div class="body-scan-line"></div>
+      <!-- Target Tracker (will be positioned in JS) -->
+      <div id="body-tracker" class="tracker"></div>
+      <!-- AR Labels (renamed to test names) -->
+      <div id="head-label" class="ar-label ar-label-left">COGNITIVE ASSESSMENT</div>
+      <div id="torso-label" class="ar-label ar-label-right">CARDIOVASCULAR TEST</div>
+      <div id="arm-label" class="ar-label ar-label-left">REACTION ASSESSMENT</div>
+      <div id="leg-label" class="ar-label ar-label-right">STABILITY ASSESSMENT</div>
+      <div id="abdomen-label" class="ar-label ar-label-right">BODY COMPOSITION</div>
+      <!-- Controls Guide -->
+      <div id="controls-guide" class="sci-panel">
+        <div class="text-xs text-blue-300 mb-1 font-semibold">INTERFACE CONTROLS</div>
+        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+          <span>ROTATE VIEW</span><span class="text-gray-300">Left Mouse / Drag</span>
+          <span>ZOOM</span><span class="text-gray-300">Mouse Wheel</span>
+          <span>PAN</span><span class="text-gray-300">Right Mouse / Drag</span>
+          <span>RESET VIEW</span><span class="text-gray-300">Double Click</span>
+          <span>SELECT TEST</span><span class="text-gray-300">Click Body Area</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Elements -->
+  <audio id="sound-click" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sound-hover" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-interface-hint-notification-911.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sound-scan" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-interface-zoom-890.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Import map for Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <!-- React components script -->
+  <script type="text/babel" src="react-components.js"></script>
+  
+  <!-- Three.js script -->
+  <script type="module" src="three-scene.js"></script>
+</body>
+</html>
